@@ -104,6 +104,7 @@ int main(){
 
     //initialise windowObject
     Map myMap(WINDOWSIZE_X,WINDOWSIZE_Y,FREESPACE,OBSTACLE_TYPE);
+    Map* map_ptr=&myMap;
     while(myMap.mapWindow.isOpen()){
         myMap.mapWindow.clear(WINDOW_COLOR); //ready to draw;
         myMap.drawObstacles();
@@ -133,6 +134,30 @@ int main(){
         myMap.DrawStartEnd(startPoint,START_COLOR);
         myMap.DrawStartEnd(endPoint,END_COLOR);}
         myMap.mapWindow.display();
+
+
+
     }
 
+}
+
+void RRTPlanner::plan(){
+    int iter_count=0;
+    while(iter_count<iterations){
+        Point random_point=chooseRandomPoint();
+        
+    }
+
+}
+
+Point RRTPlanner::chooseRandomPoint(){
+    std::random_device xgen;
+    std::mt19937 rngx(xgen());
+    std::uniform_int_distribution<std::mt19937::result_type> distx(0,WINDOWSIZE_X);
+    
+    std::random_device ygen;
+    std::mt19937 rngy(ygen());
+    std::uniform_int_distribution<std::mt19937::result_type> disty(0,WINDOWSIZE_Y);
+    Point rand_point(distx(rngx),disty(rngy));
+    return rand_point;
 }

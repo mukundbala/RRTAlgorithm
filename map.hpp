@@ -3,6 +3,7 @@
 #include <string>
 #include<iostream>
 #include <unordered_set>
+#include <unordered_map>
 #include <random>
 #include <memory>
 struct Point{
@@ -58,6 +59,54 @@ public:
     void clickAdder(){this->clickCount ++;}
     
 };
+
+class RRTPlanner{
+private:
+    int step;
+    double bias;
+    double goal_radius;
+    Map *map_ptr;
+    bool goal_reached;
+    int iterations;
+    Point start;
+    Point end;
+    std::unordered_set<Point,Point::HashFunction> chosen_points;
+    std::unordered_map<Point,Point,Point::HashFunction> parent_array;
+public:
+    //constructor:
+    RRTPlanner(int step,double bias, double goal_radius, int iterations,Point start, Point end, Map* mapptr)
+    :
+    step(step),
+    bias(bias),
+    goal_radius(goal_radius),
+    iterations(iterations),
+    start(start),
+    end(end),
+    map_ptr(mapptr) {std::cout<<"[LOG]: Starting RRT Planner";}
+    
+    
+    int getStep(){return this->step;}
+    double getBias(){return this->bias;}
+    double getGoalRadius(){return this->goal_radius;}
+    
+    void setGoalReached(){if (!goal_reached) goal_reached=!goal_reached;}
+    void addNode();
+
+
+    Point chooseRandomPoint();
+    Point getSteppedPoint(Point &random_point);
+    bool checkSteppedPoint();
+
+    Point getNearestPoint(Point &stepped_point);
+    bool checkConnectionCollision();
+    bool checkUniquePoint(Point &selected_point);
+
+    void planPrep();
+    virtual void plan(); //plan() varies for RRT, RRT* and AnytimeRRT which inherit from RRT
+};
+
+
+
 
 
 //fixed map variables
