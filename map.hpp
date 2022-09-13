@@ -36,7 +36,11 @@ private:
     std::string obstacle_type; //"scatter" vs "big"
     int num_obstacles;
     int clickCount=0;
-    void GenerateRandomPoints(std::unordered_set<Point,Point::HashFunction>& obsPos); //number of points
+    std::unordered_set<Point,Point::HashFunction> obstacle_positions;
+    Point startPoint;
+    Point endPoint;
+    bool gotStartEnd=0;
+    void GenerateRandomPoints(); //number of points
 public:
     Map();
     Map(int windowX, int windowY,double freeSpace); //constructor
@@ -54,10 +58,26 @@ public:
         sf::Vector2f myvec(pt.x,pt.y);
         return myvec;
     }
+    void set_start(int x, int y);
+    void set_end(int x, int y);
+    Point get_start();
+    Point get_end();
+
+    void updateStartEnd();
+    bool getStartEnd();
+
     //tracking clicks
     int getClick(){return clickCount;}
     void clickAdder(){this->clickCount ++;}
     
+    //public variables
+    const sf::Vector2f obs_size={20.0,20.0};
+    const sf::Color OBS_COLOR=sf::Color::Red;
+    const sf::Color LINE_COLOR=sf::Color::White;
+    const sf::Color POINT_COLOR=sf::Color::Cyan;
+    const sf::Color WINDOW_COLOR=sf::Color::Black;
+    const sf::Color START_COLOR=sf::Color::Green;
+    const sf::Color END_COLOR=sf::Color::Magenta;
 };
 
 class RRTPlanner{
@@ -110,22 +130,7 @@ public:
 
 
 //fixed map variables
-const sf::Vector2f obs_size={20.0,20.0};
-const sf::Color OBS_COLOR=sf::Color::Red;
-const sf::Color LINE_COLOR=sf::Color::White;
-const sf::Color POINT_COLOR=sf::Color::Cyan;
-const sf::Color WINDOW_COLOR=sf::Color::Black;
-const sf::Color START_COLOR=sf::Color::Green;
-const sf::Color END_COLOR=sf::Color::Magenta;
-
-std::unordered_set<Point,Point::HashFunction> obstacle_positions;
+//std::unordered_set<Point,Point::HashFunction> obstacle_positions;
 std::string OBSTACLE_TYPE;
 int WINDOWSIZE_X,WINDOWSIZE_Y;
 double FREESPACE;
-
-Point startPoint;
-Point endPoint;
-bool gotStartEnd=0;
-
-
-
