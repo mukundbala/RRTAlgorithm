@@ -15,8 +15,23 @@ struct Point{
         this->y=y;
     }
     bool operator == (const Point& otherPoint)const{
-        if (this->x == otherPoint.x && this->y==otherPoint.y) return true;
-        else return false;
+        if (x==otherPoint.x && y==otherPoint.y){return true;}
+        return false;
+    }
+    Point operator -(Point &rhs)const{
+        Point ans;
+        ans.x=x-rhs.x;
+        ans.y=y-rhs.y;
+        return ans;
+    }
+    Point operator +(Point& rhs)const{
+        Point ans;
+        ans.x=x+rhs.x;
+        ans.y=y+rhs.y;
+        return ans;
+    }
+    double mag(){
+        return sqrt(x*x + y*y);
     }
     struct HashFunction{
         std::size_t operator() (const Point& point)const
@@ -26,6 +41,7 @@ struct Point{
             return xHash ^ yHash;
         }
     };
+
 };
 
 class Map {    
@@ -36,10 +52,10 @@ private:
     std::string obstacle_type; //"scatter" vs "big"
     int num_obstacles;
     int clickCount=0;
-    std::unordered_set<Point,Point::HashFunction> obstacle_positions;
     Point startPoint;
     Point endPoint;
     bool gotStartEnd=0;
+    bool terminate=0;
     void GenerateRandomPoints(); //number of points
 public:
     Map();
@@ -50,6 +66,8 @@ public:
     void drawObstacles(); //drawing the obstacles on the screen
     void DrawPoint(Point pt, const sf::Color &color);
     void DrawStartEnd(Point pt, const sf::Color &color);
+    void DrawLine(Point &p1, Point &p2, const sf::Color &color);
+
     Point V2ftoPoint(sf::Vector2f &pt){
         Point mypoint(pt.x,pt.y);
         return mypoint;
@@ -69,8 +87,12 @@ public:
     //tracking clicks
     int getClick(){return clickCount;}
     void clickAdder(){this->clickCount ++;}
-    
+
+    bool getTerminate(){return terminate;}
+    void triggerTerminate(){terminate=true;}
     //public variables
+    std::unordered_set<Point,Point::HashFunction> obstacle_positions;
+
     const sf::Vector2f obs_size={20.0,20.0};
     const sf::Color OBS_COLOR=sf::Color::Red;
     const sf::Color LINE_COLOR=sf::Color::White;
@@ -78,48 +100,46 @@ public:
     const sf::Color WINDOW_COLOR=sf::Color::Black;
     const sf::Color START_COLOR=sf::Color::Green;
     const sf::Color END_COLOR=sf::Color::Magenta;
+    const sf::Color TRACE_COLOR=sf::Color::Yellow;
 };
+
+/*
+RRT Function definitions
+*/
 
 class RRTPlanner{
 private:
-    int step;
+    double step;
     double bias;
     double goal_radius;
-    Map *map_ptr;
-    bool goal_reached;
     int iterations;
-    Point start;
-    Point end;
+    Point start_point;
+    Point end_point;
+    Map *map_ptr;
+    double obstacle_tolerance;
+    bool goal_reached;
     std::unordered_set<Point,Point::HashFunction> chosen_points;
-    std::unordered_map<Point,Point,Point::HashFunction> parent_array;
+    std::unordered_map<Point,Point,Point::HashFunction> parent_array; //point:parent
 public:
     //constructor:
-    RRTPlanner(int step,double bias, double goal_radius, int iterations,Point start, Point end, Map* mapptr)
+    RRTPlanner(double step,double bias, int iterations,Point start, Point end, Map* mapptr)
     :
     step(step),
     bias(bias),
-    goal_radius(goal_radius),
+    goal_radius(10.0),
     iterations(iterations),
-    start(start),
-    end(end),
-    map_ptr(mapptr) {std::cout<<"[LOG]: Starting RRT Planner";}
+    start_point(start),
+    end_point(end),
+    map_ptr(mapptr), 
+    obstacle_tolerance(4),
+    goal_reached(false){std::cout<<"[LOG]: Initializing RRT Planner\n";}
     
-    
-    int getStep(){return this->step;}
-    double getBias(){return this->bias;}
-    double getGoalRadius(){return this->goal_radius;}
-    
-    void setGoalReached(){if (!goal_reached) goal_reached=!goal_reached;}
-    void addNode();
-
-
-    Point chooseRandomPoint();
-    Point getSteppedPoint(Point &random_point);
-    bool checkSteppedPoint();
-
+    Point chooseRandomPoint(); //chooses random points
     Point getNearestPoint(Point &stepped_point);
-    bool checkConnectionCollision();
-    bool checkUniquePoint(Point &selected_point);
+    Point getSteppedPoint(Point &random_point, Point &nearest_point);
+    bool checkSteppedPoint(Point &stepped_point, Point &nearest_point);
+    int orientation(Point &p, Point &q, Point& r); //returns 0 if collinear, 1 if clockwise, 2 if anticlockwise
+    bool intersect(Point &rect1, Point & rect2, Point &nearest_point, Point & stepped_point);
 
     void planPrep();
     virtual void plan(); //plan() varies for RRT, RRT* and AnytimeRRT which inherit from RRT
