@@ -125,7 +125,6 @@ int main(){
     WINDOWSIZE_X=1280;
     WINDOWSIZE_Y=1000;
     FREESPACE=0.9;
-    int loops=0;
     //initialise windowObject
     Map myMap(WINDOWSIZE_X,WINDOWSIZE_Y,FREESPACE,OBSTACLE_TYPE);
     Map* map_ptr=&myMap;
@@ -163,10 +162,6 @@ int main(){
             myMap.mapWindow.display();
         }
 
-        /*
-        At this point, all obstacle positions are in int!
-        Start and end points are also in int
-        */
        if (startPlan){ //start planning on enter key!
             RRTPlanner rrtplanner(9.0,0.4,3000,myMap.get_start(),myMap.get_end(),map_ptr);
             rrtplanner.plan(); //planning starts
@@ -183,12 +178,8 @@ int main(){
 #####################################################################################################
 */
 void RRTPlanner::plan(){
-    std::cout<<"[LOG]: Preparing RRT Planner\n";
     int iter_count=0;
-    chosen_points.emplace(start_point); //we have already chosen the start point
-    parent_array.emplace(start_point,Point(-1,-1)); 
-    std::cout<<"[LOG]:RRT Planner Starting\n";
-    sf::sleep(sf::milliseconds(1000));
+    planPrep();
     while(iter_count<iterations){
         std::cout<<"[LOG]: ITERATION "<<iter_count+1<<"\n";
         Point random_point=chooseRandomPoint();
@@ -201,41 +192,25 @@ void RRTPlanner::plan(){
             sf::sleep(sf::milliseconds(200));
             continue;}
 
-        chosen_points.emplace(stepped_point);
-        parent_array.emplace(stepped_point,nearest_point);
-        map_ptr->DrawPoint(stepped_point,map_ptr->POINT_COLOR);
-        map_ptr->DrawLine(nearest_point,stepped_point,map_ptr->LINE_COLOR);
-        Point dist_to_end=end_point-stepped_point;
-        sf::Vector2f dist_to_end_pt=map_ptr->PointtoV2f(dist_to_end);
-        float mag=sqrt(dist_to_end_pt.x*dist_to_end_pt.x + dist_to_end_pt.y*dist_to_end_pt.y);
-        if (mag<=goal_radius){
-            goal_reached=true;
-            chosen_points.emplace(end_point);
-            parent_array.emplace(end_point,stepped_point);
-            map_ptr->DrawLine(stepped_point,end_point,map_ptr->LINE_COLOR);
-        }
-        map_ptr->mapWindow.display();
+        recordNewNode(stepped_point,nearest_point);
+        goalReachedAction(stepped_point);
+        pathTracebackAction();
         if (goal_reached){
-            Point currPoint=end_point;
-            map_ptr->DrawStartEnd(end_point,map_ptr->END_COLOR);
-             map_ptr->DrawStartEnd(start_point,map_ptr->START_COLOR);
-            while(parent_array[currPoint].x!=-1){
-                map_ptr->DrawLine(currPoint,parent_array[currPoint],map_ptr->TRACE_COLOR);
-                currPoint=parent_array[currPoint];
-                map_ptr->mapWindow.display();
-                sf::sleep(sf::milliseconds(100));
-            }
-            std::cout<<"[LOG]: PATH COMPLETED!"<<"\n";
-            sf::sleep(sf::seconds(10.0)); //freeze the screen
             map_ptr->triggerTerminate();
             break;
         }
         iter_count++;
         sf::sleep(sf::milliseconds(100));
-
     }
 }
 
+void RRTPlanner::planPrep(){
+    std::cout<<"[LOG]: Preparing RRT Planner\n";
+    chosen_points.emplace(start_point); //we have already chosen the start point
+    parent_array.emplace(start_point,Point(-1,-1));
+    std::cout<<"[LOG]:RRT Planner Starting\n";
+    sf::sleep(sf::milliseconds(1000)); 
+}
 Point RRTPlanner::chooseRandomPoint(){
     int rand_num=1+(rand()%100);
     if (rand_num<=100*bias){
@@ -325,4 +300,49 @@ bool RRTPlanner::intersect(Point &rect1, Point & rect2, Point &nearest_point, Po
         return true;
     }
     return false;
+}
+
+void RRTPlanner::recordNewNode(Point &stepped_point, Point &nearest_point){
+    chosen_points.emplace(stepped_point);
+    parent_array.emplace(stepped_point,nearest_point);
+    map_ptr->DrawPoint(stepped_point,map_ptr->POINT_COLOR);
+    map_ptr->DrawLine(nearest_point,stepped_point,map_ptr->LINE_COLOR);
+    map_ptr->mapWindow.display();
+}
+
+void RRTPlanner::goalReachedAction(Point& stepped_point){
+    Point dist_to_end=end_point-stepped_point;
+    sf::Vector2f dist_to_end_pt=map_ptr->PointtoV2f(dist_to_end);
+    float mag=sqrt(dist_to_end_pt.x*dist_to_end_pt.x + dist_to_end_pt.y*dist_to_end_pt.y);
+    if (mag<=this->goal_radius){
+        this->goal_reached=true;
+        chosen_points.emplace(end_point);
+        parent_array.emplace(end_point,stepped_point);
+        map_ptr->DrawLine(stepped_point,end_point,map_ptr->LINE_COLOR);
+    }
+    else return;
+}
+void RRTPlanner::pathTracebackAction(){
+    if (this->goal_reached){
+        Point currPoint=end_point;
+        std::vector<Point> path;
+        while(parent_array[currPoint].x!=-1){
+            path.push_back(currPoint);
+            currPoint=parent_array[currPoint];
+        }
+        path.push_back(currPoint);
+        std::reverse(path.begin(),path.end());
+        sf::sleep(sf::milliseconds(100));
+        map_ptr->DrawStartEnd(end_point,map_ptr->END_COLOR);
+        map_ptr->DrawStartEnd(start_point,map_ptr->START_COLOR);
+        for (int i=0;i<path.size()-1;++i){
+            map_ptr->DrawLine(path[i],path[i+1],map_ptr->TRACE_COLOR);
+            map_ptr->mapWindow.display();
+            sf::sleep(sf::milliseconds(100));
+        }
+        std::cout<<"[LOG]: PATH COMPLETED!"<<"\n";
+        sf::sleep(sf::seconds(10.0)); //freeze the screen
+        return;
+    }
+    return;
 }

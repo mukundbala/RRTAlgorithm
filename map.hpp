@@ -1,5 +1,6 @@
 #include <SFML/Graphics.hpp>
 #include <vector>
+#include <stack>
 #include <string>
 #include<iostream>
 #include <unordered_set>
@@ -131,18 +132,20 @@ public:
     start_point(start),
     end_point(end),
     map_ptr(mapptr), 
-    obstacle_tolerance(4),
+    obstacle_tolerance(3.0),
     goal_reached(false){std::cout<<"[LOG]: Initializing RRT Planner\n";}
     
+    virtual void plan(); //plan() varies for RRT, RRT* and AnytimeRRT which inherit from RRT
+    void planPrep();
     Point chooseRandomPoint(); //chooses random points
     Point getNearestPoint(Point &stepped_point);
     Point getSteppedPoint(Point &random_point, Point &nearest_point);
     bool checkSteppedPoint(Point &stepped_point, Point &nearest_point);
     int orientation(Point &p, Point &q, Point& r); //returns 0 if collinear, 1 if clockwise, 2 if anticlockwise
     bool intersect(Point &rect1, Point & rect2, Point &nearest_point, Point & stepped_point);
-
-    void planPrep();
-    virtual void plan(); //plan() varies for RRT, RRT* and AnytimeRRT which inherit from RRT
+    void recordNewNode(Point &stepped_point, Point &nearest_point);
+    void goalReachedAction(Point &stepped_point);
+    void pathTracebackAction();
 };
 
 
