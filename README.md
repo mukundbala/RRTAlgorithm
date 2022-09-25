@@ -1,2 +1,2 @@
-# Path-Planning-Visualizations
-A module to visualize commonly used path planning algorithms like A* and RRT(variants included) using SFML and C++
+# RRT Algorithm
+My implementation of the RRT Algorithm on SFML using C++. Base for future project on path planning visualizer
