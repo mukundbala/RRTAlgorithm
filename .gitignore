@@ -13,3 +13,6 @@
 
 pathplan.o
 pathplan
+build/
+
+.vscode

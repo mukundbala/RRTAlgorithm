@@ -1,0 +1,5 @@
+window_size_x: 800
+window_size_y: 600
+num_obstacles: 300
+inflation: 10 # pixels
+variant: "rrt" #rrtstar
