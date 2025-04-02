@@ -1,5 +1,6 @@
-window_size_x: 800
-window_size_y: 600
+window_size_x: 1920
+window_size_y: 1080
 num_obstacles: 300
+obstacle_density: 0.05 # ratio of the map that is covered by obstacles
 inflation: 10 # pixels
 variant: "rrt" #rrtstar
